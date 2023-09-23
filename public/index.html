@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <script src="/public.js"></script>
+  <title>Balda</title>
+</head>
+
+<body>
+  <div class="welcome-modal-container">
+    <div class="welcome-modal">
+      <div class="welcome-modal-header">
+        <p>Добро пожаловать в игру</p>
+        <h1>Балда</h1>
+      </div>
+      <div class="welcome-modal-buttons">
+        <button class="start-game-button" id="findGameButton">Найти игру</button>
+        <button class="start-game-button" id="playWithFriendButton">Сыграть с другом</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-message-up">
+    <div class="error-message"></div>
+  </div>
+
+  <div class="player-indicator">
+    <span class="player-label">Вы</span>
+    <div class="arrow">&#10148</div>
+    <span class="player-label">Не вы</span>
+  </div>
+
+  <div class="game-board">
+    <div class="letters-row">
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text" id="middleCellOne"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+    </div>
+    <div class="letters-row">
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text" id="middleCellTwo"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+    </div>
+    <div class="letters-row">
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text" id="middleCellThree"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+    </div>
+    <div class="letters-row">
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text" id="middleCellFour"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+    </div>
+    <div class="letters-row">
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text" id="middleCellFive"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+      <div class="cell">
+        <p class="cell-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-button-box">
+    <button class="confirm-button">Подтвердить слово</button>
+  </div>
+
+  <div class="alphabet-poup">
+    <p class="letter" data-letter="А">А</p>
+    <p class="letter" data-letter="Б">Б</p>
+    <p class="letter" data-letter="В">В</p>
+    <p class="letter" data-letter="Г">Г</p>
+    <p class="letter" data-letter="Д">Д</p>
+    <p class="letter" data-letter="Е">Е</p>
+    <p class="letter" data-letter="Ë">Ë</p>
+    <p class="letter" data-letter="Ж">Ж</p>
+    <p class="letter" data-letter="З">З</p>
+    <p class="letter" data-letter="И">И</p>
+    <p class="letter" data-letter="Й">Й</p>
+    <p class="letter" data-letter="К">К</p>
+    <p class="letter" data-letter="Л">Л</p>
+    <p class="letter" data-letter="М">М</p>
+    <p class="letter" data-letter="Н">Н</p>
+    <p class="letter" data-letter="О">О</p>
+    <p class="letter" data-letter="П">П</p>
+    <p class="letter" data-letter="Р">Р</p>
+    <p class="letter" data-letter="С">С</p>
+    <p class="letter" data-letter="Т">Т</p>
+    <p class="letter" data-letter="У">У</p>
+    <p class="letter" data-letter="Ф">Ф</p>
+    <p class="letter" data-letter="Х">Х</p>
+    <p class="letter" data-letter="Ц">Ц</p>
+    <p class="letter" data-letter="Ч">Ч</p>
+    <p class="letter" data-letter="Ш">Ш</p>
+    <p class="letter" data-letter="Щ">Щ</p>
+    <p class="letter" data-letter="Ь">Ь</p>
+    <p class="letter" data-letter="Ы">Ы</p>
+    <p class="letter" data-letter="Ъ">Ъ</p>
+    <p class="letter" data-letter="Э">Э</p>
+    <p class="letter" data-letter="Ю">Ю</p>
+    <p class="letter" data-letter="Я">Я</p>
+  </div>
+
+  <div class="scoreboard">
+    <div class="player" id="palyer1">
+      <h2>Вы</h2>
+      <div class="word-history" id="history1"></div>
+      <p>Счет: <span id="score1">0</span></p>
+    </div>
+    <div class="player" id="player2">
+      <h2>Не вы</h2>
+      <div class="word-history" id="history2"></div>
+      <p>Счет: <span id="score2">0</span></p>
+    </div>
+  </div>
+</body>
+
+</html>
