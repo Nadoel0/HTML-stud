@@ -16,8 +16,8 @@ $(document).ready(function () {
     const wordInList = $('<p>').text('Почти вышло, но слово уже использовалось');
     const wordNotFound = $('<p>').html('Cлово не найдено в словаре :(');
     const letterNotInserted = $('<p>').html('Нужно вставить букву...');
+    let gameID;
     let playerNumber;
-    let currentWordsList = [];
     let currentWord = [];
     let lastAddedCell;
     let $lastLetter;
@@ -25,7 +25,7 @@ $(document).ready(function () {
     let $prevLastLetter;
     let isFirstLetter = true;
     let isLetterInserted = false;
-    let playerTurn;
+    let playerTurn = 0;
     let score = 0;
 
 
@@ -145,7 +145,7 @@ $(document).ready(function () {
 
         score = currentWord.length;
 
-        socket.emit('check-word', word);
+        socket.emit('check-word', { word: word, gameID: gameID });
 
         $cells.removeClass('selected first-letter');
         isFirstLetter = true;
@@ -160,19 +160,21 @@ $(document).ready(function () {
     socket.on('check-word-response', (data) => {
         const word = data.word;
         const isValidWord = data.valid;
+        const wordsList = data.wordsList;
 
-        if (isValidWord && !currentWordsList.includes(word) && word !== '' && isLetterInserted) {
-            addToHistory(playerNumber, word);
-            updateScore(playerNumber, score);
-            currentWordsList.push(word);
-            switchPlayers(playerTurn);
+        if (isValidWord && !wordsList.includes(word) && word !== '' && isLetterInserted) {
+            addToHistory(word);
+            updateScore(playerNumber, word);
+            socket.emit('add-to-words-list', { word: word, gameID: gameID });
+            switchPlayers();
         } else if (!isLetterInserted) {
             errorMessage(letterNotInserted);
-        } else if (currentWordsList.includes(word)) {
+        } else if (wordsList.includes(word)) {
             errorMessage(wordInList);
             if (lastAddedCell) lastAddedCell.find('.cell-text').text('');
         } else {
             errorMessage(wordNotFound);
+            if (lastAddedCell) lastAddedCell.find('.cell-text').text('');
         }
 
         updateCellAccessibility();
@@ -181,15 +183,22 @@ $(document).ready(function () {
     });
 
     // Функция для добавления слова в историю
-    function addToHistory(playerID, word) {
-        const history = $(`#history${playerID}`);
-        const p = $('<p>').text(word);
-
-        history.append(p);
+    function addToHistory(word) {
+        socket.emit('add-to-history', { word: word, gameID: gameID });
     }
 
+    socket.on('add-to-history', (data) => {
+        const word = data.word;
+
+        const playerID = (playerNumber === playerTurn) ? 1 : 2;
+        const history = $(`#history${playerID}`);
+        const p = $('<p>').text(word);
+        history.append(p);
+    });
+
     // Функция для обновления счета
-    function updateScore(playerID, score) {
+    function updateScore(playerID, word) {
+        socket.emit('update-score', { playerNumber: playerNumber, word: word });
         const dataToSend = {
             playerID: playerID,
             score: score
@@ -215,23 +224,30 @@ $(document).ready(function () {
         });
     }
 
-    // Функция для переключения игроков
-    function switchPlayers(playerTurn) {
-        socket.emit('switch-players', { playerTurn: playerTurn });
+    socket.on('update-score', (data) => {
+        score = data.score;
+        
 
-        socket.on('switch-players', (data) => {
-            if (playerNumber === data.playerTurn) {
-                $cells.css('pointer-events', 'auto');
-                $arrow.css('transform', `rotate(180deg)`);
-            } else if (playerTurn === 0) {
-                if (playerNumber === data.randomPlayer) $arrow.css('transform', `rotate(180deg)`);
-                else $arrow.css('transform', `rotate(0deg)`);
-            } else {
-                $cells.css('pointer-events', 'none');
-                $arrow.css('transform', `rotate(0deg)`);
-            }
-        });
+    });
+
+    // Функция для переключения игроков
+    function switchPlayers() {
+        socket.emit('switch-players', { playerTurn: playerTurn, gameID: gameID });
     }
+
+    socket.on('switch-players', (data) => {
+        playerTurn = data.playerTurn;
+
+        if (playerNumber === playerTurn) {
+            console.log(`Игрок ${playerNumber} совпадает с ходом ${playerTurn}`);
+            $cells.css('pointer-events', 'auto');
+            $arrow.css('transform', `rotate(180deg)`);
+        } else {
+            console.log(`Игрок ${playerNumber} не совпадает с ходом ${playerTurn}`);
+            $cells.css('pointer-events', 'none');
+            $arrow.css('transform', `rotate(0deg)`);
+        }
+    });
 
     // Функция для отображения ошибки
     function errorMessage(message) {
@@ -252,7 +268,7 @@ $(document).ready(function () {
 
     // Инициализация игры
     function initializeGame(randomWord) {
-        currentWordsList.push(randomWord);
+        socket.emit('add-to-words-list', { word: randomWord, gameID: gameID })
 
         const middleCells = [
             $('#middleCellOne'),
@@ -313,12 +329,13 @@ $(document).ready(function () {
     });
 
     socket.on('start-game', (data) => {
-        const gameID = data.gameID;
         const word = data.word;
 
+        gameID = data.gameID;
         playerNumber = data.player;
+        playerTurn = data.playerTurn;
 
-        switchPlayers(playerTurn);
+        switchPlayers();
         initializeGame(word);
 
         modalContainer.hide();

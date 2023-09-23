@@ -77,6 +77,7 @@ io.on('connection', (socket) => {
         if (waitingPlayers.length >= 2) {
             const player1 = waitingPlayers.shift();
             const player2 = waitingPlayers.shift();
+            const randomPlayer = Math.floor(Math.random() * 2) + 1;
             const words = await loadTextFile();
             const word = getRandomWord(words);
             const gameID = uuidv4();
@@ -84,6 +85,9 @@ io.on('connection', (socket) => {
                 players: [player1, player2],
                 gameID,
                 word: word,
+                playerTurn: randomPlayer,
+                words: [],
+                score: {score1: 0, score2: 0}
             }
 
             games[gameID] = game;
@@ -92,8 +96,8 @@ io.on('connection', (socket) => {
             playersInQueue.add(player1.id);
             playersInQueue.add(player2.id);
 
-            player1.emit('start-game', { gameID, player: 1, word: word });
-            player2.emit('start-game', { gameID, player: 2, word: word });
+            player1.emit('start-game', { gameID, player: 1, word: word, playerTurn: randomPlayer });
+            player2.emit('start-game', { gameID, player: 2, word: word, playerTurn: randomPlayer });
 
             console.log(`Игроки ${player1.id} и ${player2.id} начали новую игру`);
 
@@ -126,27 +130,61 @@ io.on('connection', (socket) => {
     });
 
     socket.on('switch-players', (data) => {
-        let randomPlayer;
-        let playerTurn;
-        if (data.playerTurn === 0) randomPlayer = Math.floor(Math.random() * 2) + 1;
-        else playerTurn = data.playerTurn === 1 ? 2 : 1;
+        const gameID = data.gameID;
+        let playerTurn = 0;
 
-        socket.emit('switch-players', { playerTurn: playerTurn, randomPlayerTurn: randomPlayer });
+        playerTurn = data.playerTurn === 1 ? 2 : 1;
+
+        if (games[gameID]) {
+            games[gameID].players.forEach(player => {
+                player.emit('switch-players', { playerTurn: playerTurn });
+            });
+        }
     });
 
-    socket.on('check-word', async (word) => {
-        if (!word) {
+    socket.on('add-to-history', (data) => {
+        const word = data.word;
+        const gameID = data.gameID;
+        
+        games[gameID].players.forEach(player => {
+            player.emit('add-to-history', { word: word });
+        })
+    });
+
+    socket.on('update-score', (data) => {
+        const score = data.score;
+        const playerNumber = data.playerNumber;
+        const gameID = data.gameID;
+
+        games[gameID].score[`score${playerNumber}`] = score;
+
+        games[gameID].player.forEach(player => {
+            player.emit('update-score', { score: games[gameID].score });
+        });
+    });
+
+    // Обработчик для событий игры
+    socket.on('check-word', async (data) => {
+        if (!data.word) {
             socket.emit('check-word-response', { word: '' });
             return;
         }
 
+        const gameID = data.gameID;
+        const word = data.word;
         const words = await loadTextFile();
         const isValidWord = words.includes(word);
+        const wordsList = games[gameID].words;
 
-        socket.emit('check-word-response', { word: word, valid: isValidWord });
+        socket.emit('check-word-response', { word: word, valid: isValidWord, wordsList: wordsList });
     });
 
-    // Обработчик для событий игры
+    socket.on('add-to-words-list', (data) => {
+        const word = data.word;
+        const gameID = data.gameID;
+        
+        games[gameID].words.push(word);
+    });
 
     socket.on('game-event', (data) => {
         // Обработчик событий игры, переданные от игрока
