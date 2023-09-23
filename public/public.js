@@ -26,7 +26,9 @@ $(document).ready(function () {
     let isFirstLetter = true;
     let isLetterInserted = false;
     let playerTurn = 0;
-    let score = 0;
+    let alphabetLetter;
+    let rowOfAddedCell;
+    let colOfAddedCell;
 
 
     // Функция обработки клика на пустую ячейку
@@ -124,11 +126,15 @@ $(document).ready(function () {
     // Обработчик клика на букву в алфавите
     function handleAlphabetClick() {
         const $selectedCell = $('.cell.selected');
+        rowOfAddedCell = $selectedCell;
+        colOfAddedCell = $selectedCell;
 
         if ($selectedCell.length > 0) {
             const $cellText = $selectedCell.find('.cell-text');
             if (!$cellText.text().trim()) {
                 const letter = $(this).text();
+                alphabetLetter = letter;
+                console.log(alphabetLetter);
                 $cellText.text(letter);
                 $selectedCell.removeClass('selected');
                 $cells.find(':not(.cell-text:empty)').closest('.cell').removeClass('disabled');
@@ -165,8 +171,9 @@ $(document).ready(function () {
         if (isValidWord && !wordsList.includes(word) && word !== '' && isLetterInserted) {
             addToHistory(word);
             updateScore(playerNumber, word);
-            socket.emit('add-to-words-list', { word: word, gameID: gameID });
             switchPlayers();
+            socket.emit('add-to-words-list', { word: word, gameID: gameID });
+            socket.emit('add-letter', { letter: alphabetLetter, gameID: gameID, row: rowOf(rowOfAddedCell), col: colOf(colOfAddedCell) });
         } else if (!isLetterInserted) {
             errorMessage(letterNotInserted);
         } else if (wordsList.includes(word)) {
@@ -180,6 +187,9 @@ $(document).ready(function () {
         updateCellAccessibility();
         isLetterInserted = false;
         isLastLetterSelected = false;
+        alphabetLetter = '';
+        rowOfAddedCell = 0;
+        colOfAddedCell = 0;
     });
 
     // Функция для добавления слова в историю
@@ -189,7 +199,7 @@ $(document).ready(function () {
 
     socket.on('add-to-history', (data) => {
         const word = data.word;
-
+        console.log(`Игрок ${playerNumber} ходит в ход ${playerTurn}`);
         const playerID = (playerNumber === playerTurn) ? 1 : 2;
         const history = $(`#history${playerID}`);
         const p = $('<p>').text(word);
@@ -198,36 +208,15 @@ $(document).ready(function () {
 
     // Функция для обновления счета
     function updateScore(playerID, word) {
-        socket.emit('update-score', { playerNumber: playerNumber, word: word });
-        const dataToSend = {
-            playerID: playerID,
-            score: score
-        }
-
-        fetch('/update-score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Ошибка при обновлении счета');
-            return response.json();
-        })
-        .then(updateScore => {
-            const scoreElement = $(`#score${updateScore.playerID}`);
-            scoreElement.text(updateScore.score);
-        })
-        .catch(error => {
-            console.error('Ошибка при обновлении счета: ', error);
-        });
+        socket.emit('update-score', { playerNumber: playerID, word: word, gameID: gameID });
     }
 
     socket.on('update-score', (data) => {
-        score = data.score;
-        
-
+        const updatedScore = data.score;
+        console.log(`Игрок ${playerNumber} имеет ${updatedScore} очков`);
+        const playerID = (playerNumber === playerTurn) ? 1 : 2;
+        const scoreElement = $(`#score${playerID}`);
+        scoreElement.text(updatedScore);
     });
 
     // Функция для переключения игроков
@@ -247,6 +236,16 @@ $(document).ready(function () {
             $cells.css('pointer-events', 'none');
             $arrow.css('transform', `rotate(0deg)`);
         }
+    });
+
+    socket.on('receive-letter', (data) => {
+        const addedLetter = data.letter;
+        const rowOfAddedCell = data.row;
+        const colOfAddedCell = data.col;
+
+        const $cell = $(`.letters-row:eq(${rowOfAddedCell}) .cell:eq(${colOfAddedCell}) .cell-text`);
+        $cell.text(addedLetter);
+        updateCellAccessibility();
     });
 
     // Функция для отображения ошибки

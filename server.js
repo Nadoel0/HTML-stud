@@ -20,23 +20,6 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-
-// Работа с игроками и счетом
-const playerScores = {
-    1: 0,
-    2: 0
-}
-
-app.post('/update-score', (req, res) => {
-    const { playerID, score } = req.body;
-
-    if (!playerScores.hasOwnProperty(playerID)) return res.status(400).json({ error: 'Недопустимый playerID' });
-
-    playerScores[playerID] += score;
-
-    res.json({ playerID, score: playerScores[playerID] });
-});
-
 // Функция для загрузки словаря из файла
 async function loadTextFile() {
     try {
@@ -87,7 +70,7 @@ io.on('connection', (socket) => {
                 word: word,
                 playerTurn: randomPlayer,
                 words: [],
-                score: {score1: 0, score2: 0}
+                score: { score1: 0, score2: 0 }
             }
 
             games[gameID] = game;
@@ -129,6 +112,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('add-letter', (data) => {
+        const gameID = data.gameID;
+        const addedLetter = data.letter;
+        const rowOfAddedCell = data.row;
+        const colOfAddedCell = data.col;
+
+        const opponent = games[gameID].players.find(player => player !== socket);
+
+        if (opponent) opponent.emit('receive-letter', { letter: addedLetter, row: rowOfAddedCell, col: colOfAddedCell });
+    });
+
     socket.on('switch-players', (data) => {
         const gameID = data.gameID;
         let playerTurn = 0;
@@ -145,21 +139,22 @@ io.on('connection', (socket) => {
     socket.on('add-to-history', (data) => {
         const word = data.word;
         const gameID = data.gameID;
-        
+
         games[gameID].players.forEach(player => {
             player.emit('add-to-history', { word: word });
         })
     });
 
     socket.on('update-score', (data) => {
-        const score = data.score;
+        const word = data.word;
+        const score = word.length;
         const playerNumber = data.playerNumber;
         const gameID = data.gameID;
 
-        games[gameID].score[`score${playerNumber}`] = score;
+        games[gameID].score[`score${playerNumber}`] += score;
 
-        games[gameID].player.forEach(player => {
-            player.emit('update-score', { score: games[gameID].score });
+        games[gameID].players.forEach(player => {
+            player.emit('update-score', { score: games[gameID].score[`score${playerNumber}`] });
         });
     });
 
@@ -174,7 +169,7 @@ io.on('connection', (socket) => {
         const word = data.word;
         const words = await loadTextFile();
         const isValidWord = words.includes(word);
-        const wordsList = games[gameID].words;
+        const wordsList = games[gameID].words || [];
 
         socket.emit('check-word-response', { word: word, valid: isValidWord, wordsList: wordsList });
     });
@@ -182,7 +177,7 @@ io.on('connection', (socket) => {
     socket.on('add-to-words-list', (data) => {
         const word = data.word;
         const gameID = data.gameID;
-        
+
         games[gameID].words.push(word);
     });
 
