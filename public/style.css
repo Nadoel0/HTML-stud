@@ -67,13 +67,16 @@ body {
 }
 
 
-.confirm-button-box {
+.game-buttons-box {
   position: absolute;
   top: 90%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .confirm-button {
@@ -85,12 +88,44 @@ body {
   color: #1f2029;
   font-size: 19px;
   transition: 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.exit-game-button {
+  width: 130px;
+  height: 30px;
+  border: none;
+  background-color: #ff9999;
+  color: whitesmoke;
+  font-size: 15px;
+  border-radius: 7px;
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
 }
 
 .confirm-button:hover {
   box-shadow: 0 0 20px #1f2029;
   background-color: #1f2029;
   color: whitesmoke;
+}
+
+.exit-game-button:hover {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
 }
 
 .alphabet-poup {
@@ -230,7 +265,7 @@ body {
   transition: transform 1s ease-in-out;
 }
 
-.welcome-modal-container {
+.uni-modal-container{
   background-color: rgba(0, 0, 0, 0.6);
   position: fixed;
   z-index: 1;
@@ -240,7 +275,7 @@ body {
   left: 0;
 }
 
-.welcome-modal {
+.uni-modal {
   box-sizing: border-box;
   background-color: whitesmoke;
   margin: 15% auto;
@@ -255,15 +290,15 @@ body {
   gap: 20px;
 }
 
-.welcome-modal-header {
+.uni-modal-header {
   text-align: center;
 }
 
-.welcome-modal-header p {
+.uni-modal-header p {
   font-size: 20px;
 }
 
-.welcome-modal-header h1 {
+.uni-modal-header h1 {
   margin-top: -10px;
   font-size: 32px;
 }
@@ -286,10 +321,62 @@ body {
   width: auto;
   padding: 10px 20px;
   transition: 0.3s linear;
+  cursor: pointer;
 }
 
 .start-game-button:hover {
   box-shadow: 0 0 15px #1f2029;
   background-color: #1f2029;
   color: whitesmoke;
+}
+
+.exit-game-modal-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.exit-game-modal-button {
+  border: none;
+  border-radius: 7px;
+  font-size: 22px;
+  padding: 5px 20px;
+  cursor: pointer;
+}
+
+#exitGame {
+  background-color: #a7ebab;
+  color: #333;
+  position: relative;
+}
+
+#exitGame::after, #contGame::after {
+  position: absolute;
+  content: "";
+  width: 0;
+  height: 100%;
+  top: 0;
+  left: 0;
+  direction: rtl;
+  z-index: 1;
+  border-radius: 7px;
+  box-shadow: 
+    -2px -2px 20px whitesmoke,
+    -2px -2px 5px whitesmoke,
+    2px 2px 5px #0002,
+    2px 2px 5px #0001;
+  transition: all 0.3s ease-in-out;
+}
+
+#exitGame:hover::after, #contGame:hover::after {
+  left: auto;
+  right: 0;
+  width: 100%;
+}
+
+#contGame {
+  background-color: #ff9999;
+  color: #333;
+  position: relative;
 }

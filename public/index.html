@@ -12,15 +12,27 @@
 </head>
 
 <body>
-  <div class="welcome-modal-container">
-    <div class="welcome-modal">
-      <div class="welcome-modal-header">
+  <div class="uni-modal-container" id="welcomeModal">
+    <div class="uni-modal">
+      <div class="uni-modal-header">
         <p>Добро пожаловать в игру</p>
         <h1>Балда</h1>
       </div>
       <div class="welcome-modal-buttons">
         <button class="start-game-button" id="findGameButton">Найти игру</button>
         <button class="start-game-button" id="playWithFriendButton">Сыграть с другом</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="uni-modal-container" id="exitGameModal" style="display: none;">
+    <div class="uni-modal">
+      <div class="uni-modal-header">
+        <p>Вы уверены, что хотите закончить эту игру?</p>
+      </div>
+      <div class="exit-game-modal-buttons">
+        <button class="exit-game-modal-button" id="exitGame">Да</button>
+        <button class="exit-game-modal-button" id="contGame">Нет</button>
       </div>
     </div>
   </div>
@@ -123,8 +135,9 @@
     </div>
   </div>
 
-  <div class="confirm-button-box">
+  <div class="game-buttons-box">
     <button class="confirm-button">Подтвердить слово</button>
+    <button class="exit-game-button">Выйти из игры</button>
   </div>
 
   <div class="alphabet-poup">

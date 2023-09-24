@@ -84,10 +84,6 @@ io.on('connection', (socket) => {
 
             console.log(`Игроки ${player1.id} и ${player2.id} начали новую игру`);
 
-
-            // Логика игры между двумя игроками
-            // Передача ходов и событий между игроками
-
             socket.on('disconnect', () => {
                 const game = games[gameID];
 
@@ -109,6 +105,29 @@ io.on('connection', (socket) => {
                     console.log(`Игрок ${socket.id} удален из очереди ожидания.`);
                 }
             });
+        }
+    });
+
+    socket.on('exit-game', (data) => {
+        const gameID = data.gameID;
+        const game = games[gameID];
+
+        if (game) {
+            const opponent = game.players.find((player) => player !== socket);
+
+            if (opponent) opponent.emit('game-over', { message: 'Ваш противник отключился' });
+
+            delete games[gameID];
+        }
+
+        // Удаляем игрока из множества игроков в очереди
+        playersInQueue.delete(socket.id);
+
+        const index = waitingPlayers.indexOf(socket);
+
+        if (index !== -1) {
+            waitingPlayers.splice(index, 1);
+            console.log(`Игрок ${socket.id} удален из очереди ожидания.`);
         }
     });
 
@@ -158,7 +177,6 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Обработчик для событий игры
     socket.on('check-word', async (data) => {
         if (!data.word) {
             socket.emit('check-word-response', { word: '' });
@@ -180,16 +198,6 @@ io.on('connection', (socket) => {
 
         games[gameID].words.push(word);
     });
-
-    socket.on('game-event', (data) => {
-        // Обработчик событий игры, переданные от игрока
-        // Передачв информации о ходе другому игроку
-
-        socket.broadcast.emit('game-event', data);
-    });
-
-
-    // Обработчик отключения игрока
 });
 
 // Запуск сервера

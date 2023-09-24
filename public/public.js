@@ -9,8 +9,12 @@ $(document).ready(function () {
     const $alphabetPoup = $('.alphabet-poup');
     const $arrow = $('.arrow');
     const $errorContainer = $('.error-message');
-    const findGameButton = $('#findGameButton');
-    const modalContainer = $('.welcome-modal-container');
+    const $findGameButton = $('#findGameButton');
+    const $exitGameButton = $('.exit-game-button');
+    const $contGame = $('#contGame');
+    const $exitGame = $('#exitGame');
+    const $welcomeModal = $('#welcomeModal');
+    const $exitModal = $('#exitGameModal');
 
     // Игровые элементы
     const wordInList = $('<p>').text('Почти вышло, но слово уже использовалось');
@@ -254,6 +258,14 @@ $(document).ready(function () {
         $errorContainer.append(message);
     }
 
+    function showModal(modalID) {
+        modalID.show();
+    }
+
+    function hideModal(modalID) {
+        modalID.hide();
+    }
+
 
     // Обработчик клика на ячейку
     $cells.on('click', handleCellClick);
@@ -263,6 +275,21 @@ $(document).ready(function () {
 
     // Обработчик кнопки Подтвердить
     $confirmButton.on('click', handleConfirmButtonClick);
+
+    $exitGameButton.on('click', function() {
+        showModal($exitModal)
+    });
+
+    $contGame.on('click', function() {
+        hideModal($exitModal)
+    });
+
+    $exitGame.on('click', function() {
+        hideModal($exitModal);
+        showModal($welcomeModal);
+        socket.emit('exit-game', { gameID: gameID });
+        $findGameButton.prop('disabled', false);
+    });
 
 
     // Инициализация игры
@@ -322,8 +349,8 @@ $(document).ready(function () {
 
     // Начало игры
 
-    findGameButton.on('click', () => {
-        findGameButton.prop('disabled', true);
+    $findGameButton.on('click', () => {
+        $findGameButton.prop('disabled', true);
         socket.emit('find-game');
     });
 
@@ -337,11 +364,13 @@ $(document).ready(function () {
         switchPlayers();
         initializeGame(word);
 
-        modalContainer.hide();
+        hideModal($welcomeModal);
         console.log(`Игра началась. Игрок ${playerNumber}, игра с ID ${gameID}`);
     });
 
     socket.on('game-over', (data) => {
-        console.log(data.message);
+        showModal($welcomeModal);
+        errorMessage($('<p>').html(data.message));
+        $findGameButton.prop('disabled', false);
     });
 });
