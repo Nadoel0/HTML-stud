@@ -372,5 +372,6 @@ $(document).ready(function () {
         showModal($welcomeModal);
         errorMessage($('<p>').html(data.message));
         $findGameButton.prop('disabled', false);
+        socket.emit('exit-game', { gameID: gameID });
     });
 });

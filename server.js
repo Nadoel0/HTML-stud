@@ -95,8 +95,13 @@ io.on('connection', (socket) => {
                     delete games[gameID];
                 }
 
-                // Удаляем игрока из множества игроков в очереди
-                playersInQueue.delete(socket.id);
+                // Проверяем, находится ли игрок в очереди ожидания
+                if (playersInQueue.has(socket.id)) {
+                    // Если да, то удаляем его
+                    playersInQueue.delete(socket.id);
+                    console.log(`Игрок ${socket.id} удален из очереди ожидания.`);
+                }
+
 
                 const index = waitingPlayers.indexOf(socket);
 
@@ -120,8 +125,13 @@ io.on('connection', (socket) => {
             delete games[gameID];
         }
 
-        // Удаляем игрока из множества игроков в очереди
-        playersInQueue.delete(socket.id);
+        // Проверяем, находится ли игрок в очереди ожидания
+        if (playersInQueue.has(socket.id)) {
+            // Если да, то удаляем его
+            playersInQueue.delete(socket.id);
+            console.log(`Игрок ${socket.id} удален из очереди ожидания.`);
+        }
+
 
         const index = waitingPlayers.indexOf(socket);
 
