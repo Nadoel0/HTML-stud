@@ -37,6 +37,20 @@
     </div>
   </div>
 
+  <div class="uni-modal-container" id="endGame" style="display: none;">
+    <div class="uni-modal">
+      <div class="uni-modal-header">
+        <h1 id="endGameTitle">Вы победили/проиграли</h1>
+        <p id="endGameScore">Ваш счет: </p>
+        <p>Начать новую игру?</p>
+      </div>
+      <div class="welcome-modal-buttons">
+        <button class="start-game-button" id="findGameButton">Найти игру</button>
+        <button class="start-game-button" id="playWithFriendButton">Сыграть с другом</button>
+      </div>
+    </div>
+  </div>
+
   <div class="error-message-up">
     <div class="error-message"></div>
   </div>
@@ -179,12 +193,12 @@
     <div class="player" id="palyer1">
       <h2>Вы</h2>
       <div class="word-history" id="history1"></div>
-      <p>Счет: <span id="score1">0</span></p>
+      <p>Счет: <span class="score" id="score1">0</span></p>
     </div>
     <div class="player" id="player2">
       <h2>Не вы</h2>
       <div class="word-history" id="history2"></div>
-      <p>Счет: <span id="score2">0</span></p>
+      <p>Счет: <span class="score" id="score2">0</span></p>
     </div>
   </div>
 </body>

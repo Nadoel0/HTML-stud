@@ -11,17 +11,22 @@ $(document).ready(function () {
     const $errorContainer = $('.error-message');
     const $findGameButton = $('#findGameButton');
     const $exitGameButton = $('.exit-game-button');
+    const $endGameModal = $('#endGame');
     const $contGame = $('#contGame');
     const $exitGame = $('#exitGame');
     const $welcomeModal = $('#welcomeModal');
     const $exitModal = $('#exitGameModal');
+    const $endGameTitle = $('#endGameTitle');
+    const $endGameScore = $('#endGameScore');
+    const $scoreElement = $('.score');
 
     // Игровые элементы
-    const wordInList = $('<p>').text('Почти вышло, но слово уже использовалось');
+    const wordInList = $('<p>').html('Почти вышло, но слово уже использовалось');
     const wordNotFound = $('<p>').html('Cлово не найдено в словаре :(');
     const letterNotInserted = $('<p>').html('Нужно вставить букву...');
     let gameID;
     let playerNumber;
+    let opponentNumber;
     let currentWord = [];
     let lastAddedCell;
     let $lastLetter;
@@ -33,6 +38,7 @@ $(document).ready(function () {
     let alphabetLetter;
     let rowOfAddedCell;
     let colOfAddedCell;
+    let scores;
 
 
     // Функция обработки клика на пустую ячейку
@@ -153,17 +159,13 @@ $(document).ready(function () {
     function handleConfirmButtonClick() {
         const word = currentWord.join('').toUpperCase();
 
-        score = currentWord.length;
-
         socket.emit('check-word', { word: word, gameID: gameID });
 
         $cells.removeClass('selected first-letter');
         isFirstLetter = true;
         currentWord = [];
         $errorContainer.removeClass('animation-active');
-        wordInList.remove();
-        wordNotFound.remove();
-        letterNotInserted.remove();
+        $errorContainer.empty();
     }
 
     // Функция для проверки слова в словаре
@@ -217,8 +219,10 @@ $(document).ready(function () {
 
     socket.on('update-score', (data) => {
         const updatedScore = data.score;
-        console.log(`Игрок ${playerNumber} имеет ${updatedScore} очков`);
+        scores = data.scores;
+
         const playerID = (playerNumber === playerTurn) ? 1 : 2;
+        console.log(`Игрок ${playerID} имеет ${updatedScore} очков`);
         const scoreElement = $(`#score${playerID}`);
         scoreElement.text(updatedScore);
     });
@@ -242,6 +246,17 @@ $(document).ready(function () {
         }
     });
 
+    function isGameFinished() {
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 5; col++) {
+                const $cell = $(`.letters-row:eq(${row}) .cell:eq(${col}) .cell-text`);
+                if ($cell.text().trim() === '') return false;
+            }
+        }
+
+        return true;
+    }
+
     socket.on('receive-letter', (data) => {
         const addedLetter = data.letter;
         const rowOfAddedCell = data.row;
@@ -250,6 +265,15 @@ $(document).ready(function () {
         const $cell = $(`.letters-row:eq(${rowOfAddedCell}) .cell:eq(${colOfAddedCell}) .cell-text`);
         $cell.text(addedLetter);
         updateCellAccessibility();
+
+        if (isGameFinished()) {
+            if (scores.score(playerNumber) > scores.score(opponentNumber)) $endGameTitle.text('Вы победили')
+            else $endGameTitle('Вы проиграли :(');
+            $endGameScore.text(scores.score(playerNumber));
+            showModal($endGameModal);
+            clearGameBoardAndScore();
+            socket.emit('exit-game', { gameID: gameID });
+        }
     });
 
     // Функция для отображения ошибки
@@ -288,6 +312,7 @@ $(document).ready(function () {
         hideModal($exitModal);
         showModal($welcomeModal);
         socket.emit('exit-game', { gameID: gameID });
+        clearGameBoardAndScore();
         $findGameButton.prop('disabled', false);
     });
 
@@ -346,6 +371,20 @@ $(document).ready(function () {
         }
     }
 
+    // Очистка игрового поля и счета
+    function clearGameBoardAndScore() {
+        const historyElements = $('.word-history');
+
+        historyElements.each(function () {
+            const $historyElement = $(this);
+            $historyElement.empty();
+        });
+
+        $cells.find('.cell-text').text('');
+        $scoreElement.text('0');
+    }
+
+
 
     // Начало игры
 
@@ -361,16 +400,30 @@ $(document).ready(function () {
         playerNumber = data.player;
         playerTurn = data.playerTurn;
 
+        if (playerNumber === 1) opponentNumber = 2;
+        else opponentNumber = 1;
+
         switchPlayers();
         initializeGame(word);
+        $errorContainer.empty();
 
         hideModal($welcomeModal);
         console.log(`Игра началась. Игрок ${playerNumber}, игра с ID ${gameID}`);
     });
 
     socket.on('game-over', (data) => {
-        showModal($welcomeModal);
-        errorMessage($('<p>').html(data.message));
+        if (isGameFinished()) {
+            if (scores.score(playerNumber) > scores.score(opponentNumber)) $endGameTitle.text('Вы победили')
+            else $endGameTitle('Вы проиграли :(');
+            $endGameScore.text(scores.score(playerNumber));
+            showModal($endGameModal);
+        }
+        else {
+            showModal($welcomeModal);
+            errorMessage($('<p>').html(data.message));
+        }
+
+        clearGameBoardAndScore();
         $findGameButton.prop('disabled', false);
         socket.emit('exit-game', { gameID: gameID });
     });

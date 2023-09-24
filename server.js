@@ -179,11 +179,12 @@ io.on('connection', (socket) => {
         const score = word.length;
         const playerNumber = data.playerNumber;
         const gameID = data.gameID;
+        const scores = games[gameID].score;
 
         games[gameID].score[`score${playerNumber}`] += score;
 
         games[gameID].players.forEach(player => {
-            player.emit('update-score', { score: games[gameID].score[`score${playerNumber}`] });
+            player.emit('update-score', { score: games[gameID].score[`score${playerNumber}`], scores: scores });
         });
     });
 
